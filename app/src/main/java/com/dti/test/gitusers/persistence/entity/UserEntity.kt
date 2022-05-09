@@ -6,7 +6,8 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "git_users")
 data class UserEntity(
-    @PrimaryKey
+    @PrimaryKey(autoGenerate = true)
+    val userId: Long = 0,
     val id:Long,
     @ColumnInfo(name = "user_name")
     val username:String,
@@ -39,6 +40,8 @@ data class UserEntity(
     @ColumnInfo(name = "following")
     val following:Int,
     @ColumnInfo(name = "is_favourite")
-    var isFavourite:Boolean  = false
+    var isFavourite:Boolean  = false,
+    val total:Int
+
 
 )

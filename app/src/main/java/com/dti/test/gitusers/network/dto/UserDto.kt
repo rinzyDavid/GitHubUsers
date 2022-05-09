@@ -34,5 +34,6 @@ data class UserDto(
     @SerializedName("followers")
     val followers:Int,
     @SerializedName("following")
-    val following:Int
+    val following:Int,
+    val total:Int
 )

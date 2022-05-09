@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">GitUsers</string>
+    <string name="user_api">https://api.github.com/</string>
 </resources>

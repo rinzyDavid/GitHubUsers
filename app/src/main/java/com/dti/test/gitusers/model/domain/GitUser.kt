@@ -1,6 +1,7 @@
 package com.dti.test.gitusers.model.domain
 
 data class GitUser(
+    val userId:Long,
     val id:Long,
     val username:String,
     val avatar:String,
@@ -18,4 +19,6 @@ data class GitUser(
     val followers:Int,
     val following:Int,
     var isFavourite:Boolean
-)
+){
+
+}
