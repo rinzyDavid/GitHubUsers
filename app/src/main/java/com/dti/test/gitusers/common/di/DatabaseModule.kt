@@ -3,6 +3,7 @@ package com.dti.test.gitusers.common.di
 import android.content.Context
 import com.dti.test.gitusers.common.util.*
 import com.dti.test.gitusers.model.domain.GitUser
+import com.dti.test.gitusers.persistence.dao.FavouriteDao
 
 import com.dti.test.gitusers.persistence.dao.RemoteKeyDao
 import com.dti.test.gitusers.persistence.dao.UserDao
@@ -41,12 +42,21 @@ class DatabaseModule {
     }
 
     @Provides
+    fun provideFavouriteDao(appDatabase: UsersRoomDb):FavouriteDao{
+        return appDatabase.favouriteDao()
+    }
+
+    @Provides
     fun provideDataMapper():UserDataMapper{
         return UserDataMapper(
             ModelToEntityMapperImpl(),
             PageableMapperImpl(),
             EntityListToModelMapper(),
-            DtoListToEntityMapper()
+            DtoListToEntityMapper(),
+            EntityToModelMapper(),
+            DtoToEntityMapper(),
+            FavEntityToModelMapper(),
+            FavModelToEntityMapperImpl()
         )
     }
 

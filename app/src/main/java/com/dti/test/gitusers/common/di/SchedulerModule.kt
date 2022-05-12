@@ -15,7 +15,7 @@ import javax.inject.Qualifier
 @InstallIn(SingletonComponent::class)
 class SchedulerModule {
 
-    val executor = Executors.newFixedThreadPool(5)
+    private val executor = Executors.newFixedThreadPool(5)
 
     @Provides
     @IoScheduler

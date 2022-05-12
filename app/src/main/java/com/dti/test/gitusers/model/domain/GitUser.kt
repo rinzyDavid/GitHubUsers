@@ -1,24 +1,25 @@
 package com.dti.test.gitusers.model.domain
 
 data class GitUser(
-    val userId:Long,
-    val id:Long,
-    val username:String,
-    val avatar:String,
-    val detailsUrl:String ,
-    val repository:String,
-    val fullName:String,
-    val company:String,
-    val blog:String,
-    val location:String,
-    val email:String,
-    val bioDescription:String,
-    val twitterId:String,
-    val publicRepo:Int,
-    val publicGist:Int,
-    val followers:Int,
-    val following:Int,
-    var isFavourite:Boolean
+    var userId:Long? = 0,
+    var id:Long? = 0,
+    var username:String? =  "",
+    var avatar:String? = "",
+    var detailsUrl:String? = "" ,
+    var repository:String? ="",
+    var fullName:String? = "",
+    var company:String? = "",
+    var blog:String? = "",
+    var location:String? = "",
+    var email:String? = "",
+    var bioDescription:String? = "",
+    var twitterId:String? = "",
+    var publicRepo:Int? = 0,
+    var publicGist:Int? = 0,
+    var followers:Int? = 0,
+    var following:Int? = 0,
+    var isFavourite:Boolean? = false,
+    var isDataComplete:Boolean? = false
 ){
 
 }

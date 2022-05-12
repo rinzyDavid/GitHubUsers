@@ -4,36 +4,36 @@ import com.google.gson.annotations.SerializedName
 
 data class UserDto(
     @SerializedName("id")
-    val id:Long,
+    val id:Long? = 0,
     @SerializedName("login")
-    val username:String,
-    @SerializedName("avatar")
-    val photoUrl:String,
+    val username:String? = "",
+    @SerializedName("avatar_url")
+    val photoUrl:String? ="",
     @SerializedName("url")
-    val detailsUrl:String ,
+    val detailsUrl:String? = "" ,
     @SerializedName("repos_url")
-    val repository:String,
+    val repository:String? = "",
     @SerializedName("name")
-    val fullName:String,
+    val fullName:String?= "",
     @SerializedName("company")
-    val company:String,
+    val company:String?="",
     @SerializedName("blog")
-    val blog:String,
+    val blog:String? = "",
     @SerializedName("location")
-    val location:String,
-    @SerializedName("email")
-    val email:String,
+    val location:String? = "",
+    @SerializedName("events_url")
+    val email:String? = "",
     @SerializedName("bio")
-    val bioDescription:String,
+    val bioDescription:String? = "",
     @SerializedName("twitter_username")
-    val twitterId:String,
+    val twitterId:String? = "",
     @SerializedName("public_repos")
-    val publicRepo:Int,
+    val publicRepo:Int? = 0,
     @SerializedName("public_gists")
-    val publicGist:Int,
+    val publicGist:Int? = 0,
     @SerializedName("followers")
-    val followers:Int,
+    val followers:Int? = 0,
     @SerializedName("following")
-    val following:Int,
-    val total:Int
+    val following:Int? = 0,
+    val total:Int? = 0
 )

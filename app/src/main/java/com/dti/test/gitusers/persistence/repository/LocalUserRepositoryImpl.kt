@@ -10,13 +10,16 @@ import com.dti.test.gitusers.persistence.entity.UserRemoteKey
 import com.dti.test.gitusers.persistence.mapper.UserDataMapper
 import javax.inject.Inject
 
+/**
+ * This Repository class provides implementation for accessing local room database
+ * for UserEntity and UserRemoteKey
+ */
 class LocalUserRepositoryImpl @Inject constructor(
      val userDao: UserDao,
      val keysDao: RemoteKeyDao,
     val userDataMapper: UserDataMapper
-): LocalUserRepository {
+): UserRepository {
     override fun saveUser(user: GitUser) {
-
         val userEntity = userDataMapper.modelToEntityMapper.map(user)
         userDao.insert(userEntity)
     }
@@ -24,6 +27,11 @@ class LocalUserRepositoryImpl @Inject constructor(
     override fun updateUser(user: GitUser) {
         val userEntity = userDataMapper.modelToEntityMapper.map(user)
         userDao.update(userEntity)
+    }
+
+    override fun updateUser(user: UserEntity) {
+
+        userDao.update(user)
     }
 
     override fun listAllUsers(): PagingSource<Int, UserEntity> {
@@ -60,5 +68,29 @@ class LocalUserRepositoryImpl @Inject constructor(
 
     override fun clearFavourites() {
        userDao.clearFavourites(true)
+    }
+
+    override fun fetchUser(username: String): LiveData<UserEntity> {
+        return userDao.fetchUserByUsername(username)
+    }
+
+    override fun fetchUser(id: Long): UserEntity {
+        return userDao.findById(id)
+    }
+
+    override fun fetchLastKey():UserRemoteKey {
+        return keysDao.fetchAllKeys().last()
+    }
+
+    override fun deleteUserById(id: Long) {
+       userDao.deleteUserById(id)
+    }
+
+    override fun fetchUsersTest(): List<UserEntity> {
+        return userDao.fetchUsersTest()
+    }
+
+    override fun saveUserTest(userEntity: UserEntity) {
+        userDao.insert(userEntity)
     }
 }

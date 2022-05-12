@@ -4,15 +4,19 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.dti.test.gitusers.persistence.dao.FavouriteDao
 import com.dti.test.gitusers.persistence.dao.RemoteKeyDao
 import com.dti.test.gitusers.persistence.dao.UserDao
+import com.dti.test.gitusers.persistence.entity.FavouriteEntity
 import com.dti.test.gitusers.persistence.entity.UserEntity
+import com.dti.test.gitusers.persistence.entity.UserRemoteKey
 
-@Database(entities = [UserEntity::class], version = 1, exportSchema = false)
+@Database(entities = [UserEntity::class,UserRemoteKey::class,FavouriteEntity::class], version = 1, exportSchema = false)
 abstract class UsersRoomDb:RoomDatabase() {
 
     abstract fun userDao(): UserDao
     abstract fun remoteKeyDao():RemoteKeyDao
+    abstract fun favouriteDao():FavouriteDao
 
     companion object {
 

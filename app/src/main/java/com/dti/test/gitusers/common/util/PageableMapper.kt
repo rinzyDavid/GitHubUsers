@@ -30,7 +30,8 @@ class PageableMapperImpl(
                        it.publicGist,
                        it.followers,
                        it.following,
-                       it.isFavourite
+                       it.isFavourite,
+               it.isDataComplete
            )
         }
     }

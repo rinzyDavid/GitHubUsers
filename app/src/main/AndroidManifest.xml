@@ -13,7 +13,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.GitUsers" >
         <activity
-            android:name=".views.users.ui.UserListActivity"
+            android:name=".views.UserMainActivity"
             android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

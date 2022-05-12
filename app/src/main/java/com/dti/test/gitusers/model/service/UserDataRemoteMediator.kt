@@ -5,72 +5,81 @@ import androidx.paging.LoadType
 import androidx.paging.PagingState
 import androidx.paging.rxjava3.RxRemoteMediator
 import com.dti.test.gitusers.common.di.IoScheduler
-import com.dti.test.gitusers.persistence.repository.LocalUserRepository
+import com.dti.test.gitusers.model.domain.GitUser
 import com.dti.test.gitusers.network.api.GitUserApiService
 import com.dti.test.gitusers.persistence.db.UsersRoomDb
 import com.dti.test.gitusers.persistence.entity.UserEntity
 import com.dti.test.gitusers.persistence.entity.UserRemoteKey
 import com.dti.test.gitusers.persistence.mapper.UserDataMapper
+import com.dti.test.gitusers.persistence.repository.UserRepository
 import io.reactivex.rxjava3.core.Scheduler
 import io.reactivex.rxjava3.core.Single
-import java.io.InvalidObjectException
 import javax.inject.Inject
 
-
+/**
+ * This mediator class reactively loads more users from github service when the user
+ * scrolls to the end of the list in local cache.
+ * It makes use of a local remote key data which helps to determine which page to load as the
+ * user scrolls
+ */
 @OptIn(ExperimentalPagingApi::class)
 class UserDataRemoteMediator @Inject constructor (
     private val usersRoomDb: UsersRoomDb,
     private val apiService: GitUserApiService,
     @IoScheduler private val scheduler: Scheduler,
-    private val localRepo: LocalUserRepository,
+    private val localRepo: UserRepository,
     private val mapper:UserDataMapper
         ):RxRemoteMediator<Int,UserEntity>(){
 
-    override fun loadSingle(loadType: LoadType, state: PagingState<Int, UserEntity>): Single<MediatorResult> {
 
-       var total = 0
+
+    override fun loadSingle(loadType: LoadType, state: PagingState<Int, UserEntity>): Single<MediatorResult> {
 
         return Single.just(loadType)
             .subscribeOn(scheduler)
             .map {
                 when (it) {
                     LoadType.REFRESH -> {
-                        val remoteKeys = getRemoteKeyClosestToCurrentPosition(state)
-
-                        remoteKeys?.nextKey?.minus(1) ?: 1
+                        //Return 1 so which will load the first page from network and
+                        // clear local cache to update data
+                        1
                     }
                     LoadType.PREPEND -> {
-                        val remoteKeys = getRemoteKeyForFirstItem(state)
-                            ?: throw InvalidObjectException("Result is empty")
-
-                        remoteKeys.prevKey ?: INVALID_PAGE
+                        //We dont need to add any data at the begining of our list
+                         INVALID_PAGE
                     }
                     LoadType.APPEND -> {
-                        val remoteKeys = getRemoteKeyForLastItem(state)
-                            ?: throw InvalidObjectException("Result is empty")
 
-                        remoteKeys.nextKey ?: INVALID_PAGE
+                         var remoteKeys = getRemoteKeyClosestToCurrentPosition(state)
+                        remoteKeys?.nextKey?: 1
+
+
                     }
                 }
             }
-            .flatMap {page->
+            .flatMap {page ->
 
-                if (page == INVALID_PAGE) {
+                if(page == INVALID_PAGE){
                     Single.just(MediatorResult.Success(endOfPaginationReached = true))
-                } else {
-
-                    apiService.fetchGitUsers("lagos",page)
+                }
+                else {
+                    apiService.fetchGitUsers("lagos", page as Int)
                         .subscribeOn(scheduler)
-                        .map {
-                            total = it.total
-                            mapper.dtoToEntityList.map(it.data) }
-                        .map { insertToDb(page,loadType,it,total) }
-                        .map<MediatorResult> { MediatorResult.Success(endOfPaginationReached = total == page) }
-                        .onErrorReturn { MediatorResult.Error(it) }
+                        .map { mapper.dtoToEntityList.map(it.data) }
+                        .map { insertToDb(page as Int,loadType,it,0) }
+                        .map<MediatorResult> { MediatorResult.Success(endOfPaginationReached = it.isEmpty()) }
+                        .onErrorReturn {
+                            it.printStackTrace()
+                            MediatorResult.Error(it)
+                        }
                 }
 
             }
-            .onErrorReturn { MediatorResult.Error(it) }
+            .onErrorReturn {
+                it.printStackTrace()
+                MediatorResult.Error(it) }
+
+
 
 
 
@@ -79,7 +88,6 @@ class UserDataRemoteMediator @Inject constructor (
     @Suppress("DEPRECATION")
     private fun insertToDb(page: Int, loadType: LoadType, data: List<UserEntity>,total:Int): List<UserEntity> {
         usersRoomDb.beginTransaction()
-
         try {
             if (loadType == LoadType.REFRESH) {
                 localRepo.clearKeys()
@@ -87,37 +95,54 @@ class UserDataRemoteMediator @Inject constructor (
             }
 
             val prevKey = if (page == 1) null else page - 1
-            val nextKey = if (total == page) null else page + 1
+            val nextKey = if (data.isEmpty()) null else page + 1
             val keys = data.map {
-                UserRemoteKey(it.userId,prevKey,nextKey)
+               // localRepo.deleteUserById(it.id!!)
+                UserRemoteKey(it.id!!,prevKey,nextKey)
             }
+
             localRepo.createRemoteKeys(keys)
             localRepo.insertAll(data)
             usersRoomDb.setTransactionSuccessful()
 
-        } finally {
+        }catch (e:Exception){
+            e.printStackTrace()
+        }
+        finally {
             usersRoomDb.endTransaction()
         }
 
         return data
     }
 
+    fun fetchUser(username:String):Single<GitUser>{
 
-    private fun getRemoteKeyForLastItem(state: PagingState<Int, UserEntity>): UserRemoteKey? {
-        return state.pages.lastOrNull { it.data.isNotEmpty() }?.data?.lastOrNull()?.let { repo ->
-            localRepo.getKeyByUserId(repo.userId)
-        }
+        return apiService.fetchUserDetails(username)
+            .map { mapper.dtoToEntityMapper.map(it) }
+            .map { updateUser(it) }
+            .map { mapper.entityToModelMapper.map(it) }
+
     }
 
-    private fun getRemoteKeyForFirstItem(state: PagingState<Int, UserEntity>): UserRemoteKey? {
-        return state.pages.firstOrNull { it.data.isNotEmpty() }?.data?.firstOrNull()?.let { user ->
-            localRepo.getKeyByUserId(user.userId)
+    @Suppress("DEPRECATION")
+    private fun updateUser(userEntity: UserEntity):UserEntity {
+        usersRoomDb.beginTransaction()
+        try {
+            //userEntity.isDataComplete = true
+            val entity = localRepo.fetchUser(userEntity.id!!)
+            userEntity.userId = entity.userId
+            userEntity.isDataComplete = true
+            localRepo.updateUser(userEntity)
+        }finally {
+            usersRoomDb.endTransaction()
         }
+        return userEntity
     }
 
     private fun getRemoteKeyClosestToCurrentPosition(state: PagingState<Int, UserEntity>): UserRemoteKey? {
         return state.anchorPosition?.let { position ->
-            state.closestItemToPosition(position)?.userId?.let { id ->
+            state.closestItemToPosition(position)?.id?.let { id ->
+                println("userId == $id")
                 localRepo.getKeyByUserId(id)
             }
         }

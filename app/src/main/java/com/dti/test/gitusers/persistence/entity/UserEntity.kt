@@ -2,46 +2,49 @@ package com.dti.test.gitusers.persistence.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "git_users")
+@Entity(tableName = "git_users",
+    indices = [Index(value = ["id"], unique = true)])
 data class UserEntity(
     @PrimaryKey(autoGenerate = true)
-    val userId: Long = 0,
-    val id:Long,
+    var userId: Long = 0 ,
+    var id:Long? = 0,
     @ColumnInfo(name = "user_name")
-    val username:String,
+    var username:String? = "",
     @ColumnInfo(name = "photo_url")
-    val avatar:String,
+    var avatar:String? ="",
     @ColumnInfo(name = "detail_url")
-    val detailsUrl:String ,
+    var detailsUrl:String?="" ,
     @ColumnInfo(name = "repo_url")
-    val repository:String,
+    var repository:String? ="",
     @ColumnInfo(name = "full_name")
-    val fullName:String,
+    var fullName:String? = "",
     @ColumnInfo(name = "organization")
-    val company:String,
+    var company:String? ="",
     @ColumnInfo(name = "blog")
-    val blog:String,
+    var blog:String? ="",
     @ColumnInfo(name = "country_location")
-    val location:String,
+    var location:String? = "",
     @ColumnInfo(name = "email_address")
-    val email:String,
+    var email:String? = "",
     @ColumnInfo(name = "bio_description")
-    val bioDescription:String,
+    var bioDescription:String? ="",
     @ColumnInfo(name = "twitter_username")
-    val twitterId:String,
+    var twitterId:String? = "",
     @ColumnInfo(name = "public_repo_count")
-    val publicRepo:Int,
+    var publicRepo:Int? = 0,
     @ColumnInfo(name = "public_gist_count")
-    val publicGist:Int,
+    var publicGist:Int? = 0,
     @ColumnInfo(name = "followers")
-    val followers:Int,
+    var followers:Int? = 0,
     @ColumnInfo(name = "following")
-    val following:Int,
+    var following:Int? = 0,
     @ColumnInfo(name = "is_favourite")
-    var isFavourite:Boolean  = false,
-    val total:Int
+    var isFavourite:Boolean?  = false,
+    var total:Int? = 0,
+    var isDataComplete:Boolean? = false
 
 
 )
