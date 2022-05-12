@@ -16,12 +16,7 @@ import io.reactivex.rxjava3.core.Scheduler
 import io.reactivex.rxjava3.core.Single
 import javax.inject.Inject
 
-/**
- * This mediator class reactively loads more users from github service when the user
- * scrolls to the end of the list in local cache.
- * It makes use of a local remote key data which helps to determine which page to load as the
- * user scrolls
- */
+
 @OptIn(ExperimentalPagingApi::class)
 class UserDataRemoteMediator @Inject constructor (
     private val usersRoomDb: UsersRoomDb,
@@ -35,17 +30,22 @@ class UserDataRemoteMediator @Inject constructor (
 
     override fun loadSingle(loadType: LoadType, state: PagingState<Int, UserEntity>): Single<MediatorResult> {
 
+
+
         return Single.just(loadType)
             .subscribeOn(scheduler)
             .map {
                 when (it) {
                     LoadType.REFRESH -> {
-                        //Return 1 so which will load the first page from network and
-                        // clear local cache to update data
+                        println("paging refresh called")
+
+
                         1
                     }
                     LoadType.PREPEND -> {
-                        //We dont need to add any data at the begining of our list
+                        println("paging prepend called")
+
+
                          INVALID_PAGE
                     }
                     LoadType.APPEND -> {
@@ -63,9 +63,14 @@ class UserDataRemoteMediator @Inject constructor (
                     Single.just(MediatorResult.Success(endOfPaginationReached = true))
                 }
                 else {
+                    println("fetch data for page $page")
+
                     apiService.fetchGitUsers("lagos", page as Int)
                         .subscribeOn(scheduler)
-                        .map { mapper.dtoToEntityList.map(it.data) }
+                        .map {
+
+                            println("mapping to entity")
+                            mapper.dtoToEntityList.map(it.data) }
                         .map { insertToDb(page as Int,loadType,it,0) }
                         .map<MediatorResult> { MediatorResult.Success(endOfPaginationReached = it.isEmpty()) }
                         .onErrorReturn {
@@ -88,6 +93,8 @@ class UserDataRemoteMediator @Inject constructor (
     @Suppress("DEPRECATION")
     private fun insertToDb(page: Int, loadType: LoadType, data: List<UserEntity>,total:Int): List<UserEntity> {
         usersRoomDb.beginTransaction()
+
+        println("data saving in database ${data.size}")
         try {
             if (loadType == LoadType.REFRESH) {
                 localRepo.clearKeys()
@@ -97,12 +104,15 @@ class UserDataRemoteMediator @Inject constructor (
             val prevKey = if (page == 1) null else page - 1
             val nextKey = if (data.isEmpty()) null else page + 1
             val keys = data.map {
+                println("id from entity ${it.userId}")
+
                // localRepo.deleteUserById(it.id!!)
                 UserRemoteKey(it.id!!,prevKey,nextKey)
             }
-
+            println("keys to save $keys")
             localRepo.createRemoteKeys(keys)
             localRepo.insertAll(data)
+            println("data saved.....")
             usersRoomDb.setTransactionSuccessful()
 
         }catch (e:Exception){
@@ -128,15 +138,37 @@ class UserDataRemoteMediator @Inject constructor (
     private fun updateUser(userEntity: UserEntity):UserEntity {
         usersRoomDb.beginTransaction()
         try {
-            //userEntity.isDataComplete = true
-            val entity = localRepo.fetchUser(userEntity.id!!)
-            userEntity.userId = entity.userId
             userEntity.isDataComplete = true
+            val entity = localRepo.fetchUser(userEntity.id!!)
+            println("updating user....... $userEntity")
+            userEntity.userId = entity.userId
+            println("updating user....... $userEntity")
             localRepo.updateUser(userEntity)
         }finally {
             usersRoomDb.endTransaction()
         }
         return userEntity
+    }
+
+
+    private fun getRemoteKeyForLastItem(state: PagingState<Int, UserEntity>): UserRemoteKey? {
+        return state.pages.lastOrNull { it.data.isNotEmpty() }?.data?.lastOrNull()?.let { repo ->
+            println("userId == ${repo.id}")
+            localRepo.getKeyByUserId(repo.id!!)
+        }
+    }
+
+    private fun getRemoteKeyForFirstItem(state: PagingState<Int, UserEntity>): UserRemoteKey? {
+        println("calling prepend helper ${state.pages.firstOrNull()?.data?.size}")
+        state.pages.forEach {
+            println("data for prepend is ${it.data}")
+        }
+
+
+        return state.pages.firstOrNull { it.data.isNotEmpty() }?.data?.firstOrNull()?.let { user ->
+            println("userId == ${user.id}")
+            localRepo.getKeyByUserId(user.id!!)
+        }
     }
 
     private fun getRemoteKeyClosestToCurrentPosition(state: PagingState<Int, UserEntity>): UserRemoteKey? {

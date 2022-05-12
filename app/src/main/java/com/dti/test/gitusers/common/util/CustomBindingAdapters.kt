@@ -25,12 +25,5 @@ fun loadImage(view: View, url:String?){
 @BindingAdapter("isFavourite", requireAll = false)
 fun isFavourite(view:ImageButton,value:Boolean?){
     println("value is $value")
-    value?.let {
-        if(it){
-            view.setImageResource(R.drawable.ic_favorite_on)
-        }
-        else{
-            view.setImageResource(R.drawable.ic_favourite_off)
-        }
-    }
+
 }
