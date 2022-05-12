@@ -16,6 +16,10 @@ import io.reactivex.rxjava3.core.Scheduler
 import io.reactivex.rxjava3.core.Single
 import javax.inject.Inject
 
+/**
+ * This remote mediator class helps to load more pages and update the local cache
+ * as the user scrolls through.
+ */
 
 @OptIn(ExperimentalPagingApi::class)
 class UserDataRemoteMediator @Inject constructor (
@@ -39,17 +43,19 @@ class UserDataRemoteMediator @Inject constructor (
                     LoadType.REFRESH -> {
                         println("paging refresh called")
 
-
+                    // since it is the first time the user is querying the
+                        //page, return 1 to load the first page from the network
                         1
                     }
                     LoadType.PREPEND -> {
                         println("paging prepend called")
-
+                        // we don't need to prepend data so we will return invalid_page
 
                          INVALID_PAGE
                     }
                     LoadType.APPEND -> {
-
+                    //called when the user scrolls close to the end of last page to
+                        //load more pages using value from local cache key
                          var remoteKeys = getRemoteKeyClosestToCurrentPosition(state)
                         remoteKeys?.nextKey?: 1
 
@@ -65,6 +71,7 @@ class UserDataRemoteMediator @Inject constructor (
                 else {
                     println("fetch data for page $page")
 
+                    //fetches data from the backend service and updates local cache
                     apiService.fetchGitUsers("lagos", page as Int)
                         .subscribeOn(scheduler)
                         .map {
@@ -95,6 +102,8 @@ class UserDataRemoteMediator @Inject constructor (
         usersRoomDb.beginTransaction()
 
         println("data saving in database ${data.size}")
+        //Check if it is first time load, clear the
+        //data and key cache
         try {
             if (loadType == LoadType.REFRESH) {
                 localRepo.clearKeys()

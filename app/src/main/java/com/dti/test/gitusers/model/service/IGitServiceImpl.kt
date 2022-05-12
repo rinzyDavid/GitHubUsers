@@ -75,6 +75,7 @@ has scrolled to the end of the list in local cache
     use the remote mediator to fetch and save user's complete details
      */
     override fun fetchUserDetails(username: String, isDataComplete: Boolean): LiveData<SimpleResult<GitUser>> {
+        println("is data complete    $isDataComplete")
 
         if (isDataComplete){
             return Transformations.map(localRepo.fetchUser(username)){
